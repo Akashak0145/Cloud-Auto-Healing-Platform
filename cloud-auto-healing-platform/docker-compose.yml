@@ -1,0 +1,104 @@
+
+services:
+  demo-app:
+    build: ./app
+    image: cloud-monitoring-app:1.0
+    container_name: demo-app
+    ports:
+      - "8000:8000"
+    restart: "no"
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    depends_on:
+      - demo-app
+
+  grafana:
+    image: grafana/grafana:12.1.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+
+      # Gmail SMTP configuration
+      GF_SMTP_ENABLED: "true"
+      GF_SMTP_HOST: "smtp.gmail.com:587"
+      GF_SMTP_USER: "${GRAFANA_SMTP_USER}"
+      GF_SMTP_PASSWORD: "${GRAFANA_SMTP_PASSWORD}"
+      GF_SMTP_FROM_ADDRESS: "${GRAFANA_SMTP_FROM_ADDRESS}"
+      GF_SMTP_FROM_NAME: "Cloud Auto-Healing Platform"
+      GF_SMTP_STARTTLS_POLICY: "MandatoryStartTLS"
+
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+  node-exporter:
+    image: prom/node-exporter:v1.9.1
+    container_name: node-exporter
+    ports:
+      - "127.0.0.1:9100:9100"
+    command:
+      - "--path.rootfs=/host"
+    volumes:
+      - /:/host:ro
+    restart: unless-stopped
+
+  cadvisor:
+    image: ghcr.io/google/cadvisor:v0.53.0
+    container_name: cadvisor
+    ports:
+      - "127.0.0.1:8081:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+    restart: unless-stopped
+
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: docker-socket-proxy
+    environment:
+      CONTAINERS: "1"
+      POST: "0"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - docker-api
+    restart: unless-stopped
+
+  docker-exporter:
+    build:
+      context: ./docker-exporter
+    container_name: docker-exporter
+    environment:
+      DOCKER_HOST: tcp://docker-socket-proxy:2375
+    ports:
+      - "127.0.0.1:9101:9101"
+    depends_on:
+      - docker-socket-proxy
+    networks:
+      - default
+      - docker-api
+    restart: unless-stopped
+
+networks:
+  docker-api:
+    internal: true
+
+volumes:
+  prometheus-data:
+  grafana-data:

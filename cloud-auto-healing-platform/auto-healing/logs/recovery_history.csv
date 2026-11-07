@@ -1,0 +1,11 @@
+timestamp,container,event,status,details
+2026-10-27T15:23:38.098022+00:00,demo-app,recovery_attempt,command_succeeded,docker start demo-app
+2026-10-27T15:23:48.252821+00:00,demo-app,recovery_verification,healthy,Application health endpoint responded
+2026-10-27T15:25:50.311277+00:00,demo-app,recovery_attempt,command_succeeded,docker start demo-app
+2026-10-27T15:26:00.537150+00:00,demo-app,recovery_verification,healthy,Application health endpoint responded
+2026-10-28T02:43:42.162462+00:00,demo-app,recovery_attempt,command_succeeded,docker start demo-app
+2026-10-28T02:43:47.301154+00:00,demo-app,recovery_verification,healthy,Application health endpoint responded
+2026-10-28T06:27:43.424216+00:00,demo-app,recovery_attempt,command_succeeded,docker start demo-app
+2026-10-28T06:27:48.551135+00:00,demo-app,recovery_verification,healthy,Application health endpoint responded
+2026-10-28T06:39:18.169975+00:00,demo-app,recovery_attempt,command_succeeded,docker start demo-app
+2026-10-28T06:39:23.245867+00:00,demo-app,recovery_verification,healthy,Application health endpoint responded
